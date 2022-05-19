@@ -1,4 +1,5 @@
 import re
+import time
 
 import requests
 from conf import conf
@@ -6,65 +7,15 @@ from model import response
 
 
 class BestSeller:
-    def __init__(self, country):
-        self.country = country
-        self.bestsellers_url = conf.country2url[self.country]
-        self.session = requests.Session()
-        self.headers = {
-            # "host": conf.country2host[self.country],
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36"
-        }
-        self.first_res = None
-        self.session_id = None
-        self.session_id_token = None
-        self.ubid_main = None
-        self.session_token = None
 
-    def get_session_id_token(self):
-        self.first_res = self.session.get(self.bestsellers_url, headers=self.headers)
-        self.session_id_token = self.first_res.headers['set-cookie']
-        self.session_id = re.findall('session-id=(.*?);', self.session_id_token)[0]
 
-    def get_navigation_params(self):
-        res_text = self.first_res.text
-        hash_customer_and_session_id = re.findall("hashCustomerAndSessionId','(.*?)'", res_text)[0]
-        navigation_params = {
-            'ajaxTemplate': 'hMenuDesktopFirstLayer',
-            'pageType': 'zeitgeist',
-            'hmDataAjaxHint': 1,
-            'isFreshRegion': 'false',
-            'isFreshCustomer': 'false',
-            'isPrimeMember': 'false',
-            'isPrimeDay': 'false',
-            'isSmile': 'false',
-            'isBackup': 'false',
-            'firstName': 'false',
-            'navDeviceType': 'desktop',
-            'hashCustomerAndSessionId': hash_customer_and_session_id,
-            'isExportMode': 'true',
-            'environmentVFI': 'AmazonNavigationCards/development@B6080359880-AL2_x86_64',
-            'languageCode': conf.language_code[self.country]
-        }
-        return navigation_params
-
-    def get_ubid_main(self):
-        url = 'https://www.amazon.com/portal-migration/hz/glow/get-rendered-toaster?pageType=zeitgeist&aisTransitionState=in&rancorLocationSource=REALM_DEFAULT&_=1652883607143'
+    def request_category(self):
+        url = 'https://www.amazon.com/Best-Sellers-Amazon-Devices-Accessories/zgbs/amazon-devices'
         headers = self.headers
-        headers["cookie"] = self.session_id_token
+        headers['cookie'] = 'session-id={}; ubid-main={}; session-token={}'.format(self.session_id, self.ubid_main, self.session_token)
         res = self.session.get(url=url, headers=headers)
-        self.ubid_main = re.findall('ubid-main=(.*?);', res.headers['set-cookie'])[0]
-        print(self.ubid_main)
-
-    def get_token(self):
-        params = self.get_navigation_params()
-        header = self.headers
-        header["cookie"] = 'session-id={}; i18n-prefs=USD; lc-main=en_US; ubid-main={}'.format(self.session_id, self.ubid_main)
-        url = 'https://www.amazon.com/gp/navigation/ajax/generic.html?'
-        res = self.session.get(url=url, headers=header, params=params)
-
-        self.session_token = re.findall('session-token=(.*?);', res.headers['set-cookie'])[0]
-        print(self.session_token)
-
+        print(res)
+        print(res.text)
 
 
 def test():
@@ -80,13 +31,25 @@ def test():
     print(res.headers['set-cookie'])
 
 
-if __name__ == '__main__':
+def test2():
+    # 1652883607143
+    # 1652962658936
+    # 1652962580.2329466
+    t = int(time.time()*1000)
+    print(t)
+
+
+def main():
     best = BestSeller("US")
-    best.get_session_id_token()
+    best.request_session_id()
     best.get_navigation_params()
-    best.get_ubid_main()
-    best.get_token()
-    # test()
+    best.request_ubid_main()
+    best.request_token()
+    best.request_category()
+
+
+if __name__ == '__main__':
+    main()
 
 
 
