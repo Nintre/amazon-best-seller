@@ -66,3 +66,10 @@ class CookieTree:
         res = self.session.get(url=url, headers=header, params=params)
 
         self.session_token = re.findall('session-token=(.*?);', res.headers['set-cookie'])[0]
+
+    def get_cookie_str(self):
+        self.request_session_id()
+        self.get_navigation_params()
+        self.request_ubid_main()
+        self.request_token()
+        return 'session-id={}; ubid-main={}; session-token={}'.format(self.session_id, self.ubid_main, self.session_token)
