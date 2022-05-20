@@ -15,7 +15,7 @@ class CookieTree:
             # "host": conf.country2host[self.country],
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36"
         }
-        self.first_res = None
+        self.first_html = None
         self.session_id = None
         self.first_set_cookie = None
         self.ubid_main = None
@@ -23,8 +23,9 @@ class CookieTree:
 
     # 拿到session_id和后面请求要用的cookie
     def request_session_id(self):
-        self.first_res = self.session.get(self.bestsellers_url, headers=self.headers)
-        self.first_set_cookie = self.first_res.headers['set-cookie']
+        res = self.session.get(self.bestsellers_url, headers=self.headers)
+        self.first_html = res.text
+        self.first_set_cookie = res.headers['set-cookie']
         self.session_id = re.findall('session-id=(.*?);', self.first_set_cookie)[0]
 
     def request_ubid_main(self):
@@ -36,8 +37,7 @@ class CookieTree:
         self.ubid_main = re.findall('ubid-main=(.*?);', res.headers['set-cookie'])[0]
 
     def get_navigation_params(self):
-        res_text = self.first_res.text
-        hash_customer_and_session_id = re.findall("hashCustomerAndSessionId','(.*?)'", res_text)[0]
+        hash_customer_and_session_id = re.findall("hashCustomerAndSessionId','(.*?)'", self.first_html)[0]
         navigation_params = {
             'ajaxTemplate': 'hMenuDesktopFirstLayer',
             'pageType': 'zeitgeist',

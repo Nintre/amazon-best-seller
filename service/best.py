@@ -3,13 +3,9 @@ import re
 import time
 
 import requests
-from conf import conf
-from model import response
 import cookie
-import sys
-
-# sys.path.append('F:\\c++_project\\amazon-best-seller\\service\\parser_html.py')
 import parser_html
+
 
 class BestSeller:
     def __init__(self, country: str):
@@ -19,7 +15,8 @@ class BestSeller:
             # "host": conf.country2host[self.country],
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36"
         }
-        self.cookie_tree = cookie.CookieTree(country).get_cookie_str()
+        self.cookie_tree = cookie.CookieTree(country)
+        self.cookie_str = self.cookie_tree.get_cookie_str()
         self.acp_params = None
         self.acp_path = None
         self.script_list = None
@@ -27,11 +24,14 @@ class BestSeller:
         self.ahead_res = []
         self.more_res = []
 
+    def get_level1_category(self):
+        parser_html.ParseCategory().parse_level1(self.cookie_tree.first_html)
+
     # 这一步只能拿到第一页的前30个商品
     def request_ahead(self, page):
         url = 'https://www.amazon.com/Best-Sellers-Amazon-Devices-Accessories/zgbs/amazon-devices?&pg={}'.format(page)
         headers = self.headers
-        headers['cookie'] = self.cookie_tree
+        headers['cookie'] = self.cookie_str
         res = self.session.get(url=url, headers=headers)
         self.ahead_res.append(res.text)
         self.acp_params = re.findall('data-acp-params="(.*?)"', res.text)[0]
@@ -83,13 +83,12 @@ class BestSeller:
             self.request_ahead(i)
             self.request_falls()
 
-        print(len(self.ahead_res))
-        print(len(self.more_res))
-        parser_html.get_product(self.ahead_res, self.more_res)
+        parser_html.ParseHtml(self.ahead_res, self.more_res).parse_product()
 
 
 def main():
     b = BestSeller('US')
+    b.get_level1_category()
     b.request_one_category()
 
 
