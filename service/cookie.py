@@ -34,7 +34,6 @@ class CookieTree:
         headers["cookie"] = self.first_set_cookie
         res = self.session.get(url=url, headers=headers)
         self.ubid_main = re.findall('ubid-main=(.*?);', res.headers['set-cookie'])[0]
-        print(self.ubid_main)
 
     def get_navigation_params(self):
         res_text = self.first_res.text
